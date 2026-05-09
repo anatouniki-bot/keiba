@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競馬予想 2026 | G1 PREDICTOR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;background:#F1F5F9;color:#111827;min-height:100vh}
+  button{font-family:inherit;cursor:pointer;border:none;outline:none}
+  input{font-family:inherit;outline:none}
+  ::-webkit-scrollbar{height:4px}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:2px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .spin{animation:spin 0.8s linear infinite}
+  .fade-up{animation:fadeUp 0.25s ease both}
+
+/* Header */
+#header{background:#fff;border-bottom:1px solid #E2E8F0;position:sticky;top:0;z-index:50;box-shadow:0 1px 3px rgba(0,0,0,0.07)}
+#header-inner{max-width:720px;margin:0 auto;height:54px;padding:0 16px;display:flex;align-items:center;gap:10px}
+#updating-indicator{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:#2563EB;font-weight:600}
+#updating-spinner{width:14px;height:14px;border-radius:50%;border:2px solid #BFDBFE;border-top-color:#2563EB}
+
+/* Main */
+#main{max-width:720px;margin:0 auto;padding:14px 12px 48px}
+
+/* Error */
+#error-bar{background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:#991B1B}
+
+/* Cards */
+.card{background:#fff;border-radius:12px;border:1px solid #E2E8F0;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+
+/* Race tabs */
+#race-tabs-wrap{padding:12px 14px 10px;margin-bottom:12px}
+#race-tabs-label{font-size:11px;font-weight:700;color:#64748B;margin-bottom:8px;letter-spacing:.5px}
+#race-tabs-scroll{overflow-x:auto;padding-bottom:4px}
+#race-tabs{display:flex;gap:6px;min-width:max-content}
+.race-tab{padding:7px 11px;border-radius:8px;border:1px solid #E2E8F0;background:#fff;color:#334155;font-weight:500;font-size:12px;min-width:88px;text-align:left;flex-shrink:0;transition:all 0.15s;cursor:pointer}
+.race-tab.past{background:#F8FAFC;color:#94A3B8}
+.race-tab.active{background:#2563EB;color:#fff;border-color:#2563EB;box-shadow:0 2px 8px rgba(37,99,235,0.25);font-weight:700}
+.race-tab-name{margin-bottom:2px}
+.race-tab-date{font-size:10px;opacity:.7}
+.race-tab-winner{font-size:10px;margin-top:2px;font-weight:600;color:#B45309}
+.race-tab.active .race-tab-winner{color:rgba(255,255,255,0.85)}
+
+/* Race info */
+#race-info{padding:13px 16px;margin-bottom:12px}
+#race-info-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.g1-badge{background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
+#race-name{font-size:17px;font-weight:700;color:#0F172A}
+#race-detail{font-size:12px;color:#64748B}
+#race-date{margin-left:auto;font-size:11px;color:#94A3B8}
+#winner-bar{margin-top:8px;background:#FFFBEB;border-radius:7px;padding:7px 12px;display:flex;align-items:center;gap:8px;border:1px solid #FDE68A}
+#odds-preview{margin-top:8px;display:flex;gap:5px;flex-wrap:wrap}
+.odds-chip{display:inline-flex;align-items:center;gap:4px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:3px 8px;font-size:11px}
+.odds-val{font-family:monospace;font-weight:700}
+.odds-hot{color:#DC2626}
+.odds-warm{color:#D97706}
+.odds-cold{color:#94A3B8}
+
+/* Main tabs */
+#tab-bar{display:flex;gap:4px;margin-bottom:14px;background:#E2E8F0;border-radius:10px;padding:4px}
+.main-tab{flex:1;padding:10px 0;border-radius:7px;background:transparent;color:#64748B;font-weight:500;font-size:14px;transition:all 0.15s}
+.main-tab.active{background:#fff;color:#0F172A;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+
+/* Waku badge */
+.waku{display:inline-flex;align-items:center;justify-content:center;width:30px;height:18px;border-radius:3px;font-size:10px;font-weight:700;flex-shrink:0}
+
+/* Summary bar */
+.summary-bar{margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.summary-mark{font-size:13px;color:#94A3B8;width:16px}
+.summary-name{font-size:13px;font-weight:700;color:#0F172A;flex:1}
+.summary-count{font-size:12px}
+.progress-bg{height:7px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width 0.6s ease}
+
+/* Expert cards */
+.expert-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:8px}
+.expert-header{padding:13px 16px;display:flex;align-items:center;gap:10px}
+.expert-emoji{font-size:22px}
+.expert-name{font-size:13px;font-weight:700}
+.expert-title{font-size:11px;color:#94A3B8}
+.expert-body{padding:0 16px 14px;border-top:1px solid #F1F5F9}
+.pick-row{display:flex;gap:8px;margin:10px 0}
+.pick-box{border-radius:8px;padding:8px 12px}
+.pick-label{font-size:10px;font-weight:700;margin-bottom:3px}
+.pick-horse{font-size:14px;font-weight:700;color:#0F172A;display:flex;align-items:center;gap:5px}
+.place-box{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;flex:2}
+.place-label{font-size:10px;color:#64748B;font-weight:700;margin-bottom:3px}
+.place-names{font-size:12px;color:#374151}
+.comment-box{font-size:12px;color:#374151;line-height:1.8;border-radius:8px;padding:10px 12px}
+.reveal-btn{padding:7px 16px;border-radius:8px;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.close-btn{background:none;font-size:20px;color:#CBD5E1;padding:0 2px}
+
+/* Media tab */
+#update-banner{display:flex;align-items:center;gap:8px;margin-bottom:12px;background:#EFF6FF;border-radius:10px;padding:10px 14px;border:1px solid #BFDBFE}
+#update-info{flex:1;min-width:0}
+#update-time{font-size:12px;font-weight:700;color:#1E40AF}
+#update-sub{font-size:10px;color:#64748B}
+#update-btn{padding:6px 14px;border-radius:8px;background:#2563EB;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+
+.media-card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:7px}
+.media-header{padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.media-icon{font-size:20px}
+.media-name{font-size:13px;font-weight:700;color:#0F172A;flex:1}
+.media-pick-inline{display:flex;align-items:center;gap:6px}
+.media-pick-name{font-size:13px;font-weight:700;color:#78350F}
+.media-chevron{font-size:18px;color:#CBD5E1;transition:transform 0.2s}
+.media-body{padding:0 16px 14px;border-top:1px solid #F1F5F9}
+.hole-box{background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:8px 10px;min-width:72px}
+.hole-label{font-size:10px;color:#C2410C;font-weight:700;margin-bottom:3px}
+.hole-name{font-size:11px;color:#9A3412}
+.note-box{font-size:12px;color:#64748B;line-height:1.75;background:#F8FAFC;border-radius:8px;padding:10px 12px;border:1px solid #F1F5F9}
+
+.hole-chip{display:inline-flex;align-items:center;gap:5px;border-radius:8px;padding:5px 10px}
+.hole-chip-top{background:#FFF7ED;border:1px solid #FED7AA}
+.hole-chip-other{background:#F8FAFC;border:1px solid #E2E8F0}
+
+/* API modal */
+#api-modal-bg{position:fixed;inset:0;background:rgba(15,23,42,0.6);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(4px);padding:16px}
+#api-modal{background:#fff;border-radius:16px;padding:28px;max-width:400px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,0.18)}
+#api-modal h2{font-size:18px;font-weight:700;color:#0F172A;margin-bottom:6px}
+#api-modal p{font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.7}
+#api-note{font-size:11px;color:#94A3B8;margin-bottom:12px;line-height:1.6;background:#F8FAFC;border-radius:8px;padding:8px 10px;border:1px solid #E2E8F0}
+#api-saved{font-size:11px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin-bottom:12px;color:#15803D;font-weight:600}
+#api-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #D1D5DB;font-size:13px;margin-bottom:12px;font-family:monospace}
+#api-input:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+.modal-btn-row{display:flex;gap:8px}
+#api-cancel{flex:1;padding:10px 0;border-radius:8px;background:#F1F5F9;color:#64748B;font-size:13px;font-weight:600}
+#api-submit{flex:2;padding:10px 0;border-radius:8px;background:#2563EB;color:#fff;font-size:13px;font-weight:700}
+
+/* Empty */
+.empty{text-align:center;padding:48px 20px;color:#94A3B8}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-text{font-size:14px;font-weight:600;color:#374151}
+
+/* Footer */
+#footer{text-align:center;font-size:11px;color:#94A3B8;margin-top:24px}
+</style>
+
+</head>
+<body>
+
+<!-- Header -->
+
+<div id="header">
+  <div id="header-inner">
+    <span style="font-size:24px">🏇</span>
+    <div>
+      <div style="font-size:16px;font-weight:700;color:#0F172A">競馬予想 2026</div>
+      <div style="font-size:10px;color:#94A3B8;letter-spacing:.5px">G1 PREDICTOR</div>
+    </div>
+    <div id="updating-indicator" style="display:none">
+      <div id="updating-spinner" class="spin"></div>
+      更新中...
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+
+<div id="main">
+  <div id="error-bar" style="display:none">
+    <span>⚠️</span>
+    <span id="error-msg"></span>
+    <button onclick="document.getElementById('error-bar').style.display='none'" style="margin-left:auto;background:none;font-size:16px;color:#94A3B8">×</button>
+  </div>
+
+  <!-- Race tabs -->
+
+  <div class="card" id="race-tabs-wrap">
+    <div id="race-tabs-label">2026年 G1レース</div>
+    <div id="race-tabs-scroll"><div id="race-tabs"></div></div>
+  </div>
+
+  <!-- Race info -->
+
+  <div class="card" id="race-info">
+    <div id="race-info-row">
+      <span class="g1-badge">G1</span>
+      <span id="race-name"></span>
+      <span id="race-detail"></span>
+      <span id="race-date"></span>
+    </div>
+    <div id="winner-bar" style="display:none"></div>
+    <div id="odds-preview"></div>
+  </div>
+
+  <!-- Tab bar -->
+
+  <div id="tab-bar">
+    <button class="main-tab active" onclick="switchTab('experts')" id="tab-experts">🎯 予想屋分析</button>
+    <button class="main-tab" onclick="switchTab('media')" id="tab-media">📰 メディア予想</button>
+  </div>
+
+  <!-- Tab contents -->
+
+  <div id="content-experts"></div>
+  <div id="content-media" style="display:none"></div>
+
+  <div id="footer">※ エンターテインメント目的のアプリです。馬券購入はご自身の判断でお願いします。</div>
+</div>
+
+<!-- API Modal -->
+
+<div id="api-modal-bg" style="display:none" onclick="closeModal()">
+  <div id="api-modal" onclick="event.stopPropagation()">
+    <h2>🔑 Perplexity APIキー</h2>
+    <p><a href="https://www.perplexity.ai/settings/api" target="_blank" style="color:#2563EB">perplexity.ai/settings/api</a> でAPIキーを取得して貼り付けてください。</p>
+    <div id="api-saved" style="display:none">✓ 前回のキーが入力済みです。そのまま「更新する」を押してください。</div>
+    <div id="api-note">※ キーはブラウザに保存され、次回以降は自動入力されます。<br>※ sonar-proの利用料金（約$0.01/回）が発生します。</div>
+    <input type="password" id="api-input" placeholder="pplx-xxxxxxxxxxxxxxxx">
+    <div class="modal-btn-row">
+      <button id="api-cancel" onclick="closeModal()">キャンセル</button>
+      <button id="api-submit" onclick="submitApiKey()">更新する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── データ ──────────────────────────────────────────────────
+const WAKU_COLOR = {1:'#E5E7EB',2:'#1F2937',3:'#DC2626',4:'#1D4ED8',5:'#CA8A04',6:'#15803D',7:'#EA580C',8:'#DB2777'};
+const WAKU_TEXT  = {1:'#111',2:'#fff',3:'#fff',4:'#fff',5:'#fff',6:'#fff',7:'#fff',8:'#fff'};
+
+const BASE_HORSES = [
+  {id:1, name:'リゾートアイランド',jockey:'佐々木大輔',odds:117.5,waku:1,sex:'牡',form:[7,4,6,5,7],style:'追込',blood:'ジャスタウェイ',training:66},
+  {id:2, name:'ユウファラオ',jockey:'松若風馬',odds:143.6,waku:1,sex:'牡',form:[8,5,7,6,6],style:'追込',blood:'ヘニーヒューズ',training:65},
+  {id:3, name:'オルネーロ',jockey:'津村明秀',odds:42.1,waku:2,sex:'牡',form:[3,5,2,4,3],style:'差し',blood:'サートゥルナーリア',training:72},
+  {id:4, name:'カヴァレリッツォ',jockey:'西村淳也',odds:4.6,waku:2,sex:'牡',form:[1,13,1,2,1],style:'先行',blood:'サートゥルナーリア',training:88},
+  {id:5, name:'ギリーズボール',jockey:'西塚洸二',odds:67.3,waku:3,sex:'牝',form:[4,6,3,5,4],style:'差し',blood:'ドゥラメンテ',training:70},
+  {id:6, name:'ジーネキング',jockey:'斎藤新',odds:89.4,waku:3,sex:'牡',form:[5,7,4,6,5],style:'追込',blood:'モズアスコット',training:68},
+  {id:7, name:'ダイヤモンドノット',jockey:'川田将雅',odds:3.2,waku:4,sex:'牡',form:[1,2,1,1,1],style:'先行',blood:'ブリックスアンドモルタル',training:95},
+  {id:8, name:'ローベルクランツ',jockey:'松山弘平',odds:31.8,waku:4,sex:'牡',form:[3,2,1,5,3],style:'先行',blood:'エピファネイア',training:78},
+  {id:9, name:'サンダーストラック',jockey:'C.ルメール',odds:24.7,waku:5,sex:'牡',form:[2,4,3,1,6],style:'差し',blood:'キングカメハメハ',training:80},
+  {id:10,name:'エコロアルバ',jockey:'横山和生',odds:9.1,waku:5,sex:'牡',form:[1,4,1,2,3],style:'先行',blood:'モズアスコット',training:87},
+  {id:11,name:'アドマイヤクワッズ',jockey:'坂井瑠星',odds:12.4,waku:6,sex:'牡',form:[1,15,1,2,3],style:'先行',blood:'リアルスティール',training:85},
+  {id:12,name:'アンドゥーリル',jockey:'岩田望来',odds:48.2,waku:6,sex:'牡',form:[5,2,4,3,2],style:'差し',blood:'ハービンジャー',training:71},
+  {id:13,name:'ハッピーエンジェル',jockey:'三浦皇成',odds:156.2,waku:7,sex:'牝',form:[6,8,5,7,8],style:'差し',blood:'ブラックタイド',training:63},
+  {id:14,name:'バルセシート',jockey:'北村友一',odds:33.5,waku:7,sex:'牡',form:[4,1,2,3,5],style:'差し',blood:'キタサンブラック',training:74},
+  {id:15,name:'フクチャンショウ',jockey:'横山武史',odds:72.8,waku:7,sex:'牡',form:[6,3,5,4,3],style:'追込',blood:'ダイワメジャー',training:69},
+  {id:16,name:'アスクイキゴミ',jockey:'戸崎圭太',odds:14.8,waku:8,sex:'牡',form:[1,1,3,2,4],style:'逃げ',blood:'ロードカナロア',training:82},
+  {id:17,name:'ロデオドライブ',jockey:'D.レーン',odds:6.3,waku:8,sex:'牡',form:[2,1,3,2,1],style:'差し',blood:'サートゥルナーリア',training:86},
+  {id:18,name:'レザベーション',jockey:'原優介',odds:19.4,waku:8,sex:'牡',form:[2,3,1,4,2],style:'先行',blood:'ルーラーシップ',training:79},
+];
+
+const BASE_MEDIA = [
+  {media:'ぶっちゃけ競馬',icon:'🐴',pick:'カヴァレリッツォ',place:['ロデオドライブ','ダイヤモンドノット'],hole:'アスクイキゴミ',note:'朝日杯FSを強烈な末脚で差し切り。前走皐月賞の大敗は距離の問題。得意の1600mに戻れば末脚炸裂必至。'},
+  {media:'中日スポーツ',icon:'📰',pick:'ダイヤモンドノット',place:['カヴァレリッツォ','アドマイヤクワッズ'],hole:'レザベーション',note:'戦歴から安定感は抜群で大崩れ考えにくい。前哨戦ファルコンS快勝。今開催の東京は先行有利が明白。'},
+  {media:'SPREAD',icon:'📊',pick:'カヴァレリッツォ',place:['エコロアルバ','アドマイヤクワッズ'],hole:'エコロアルバ',note:'朝日杯FS勝ち馬が本命。ロデオドライブは東京コース未経験で過去10年の好走馬はコース経験済みが8/10。'},
+  {media:'競馬ナビ',icon:'🔍',pick:'カヴァレリッツォ',place:['ダイヤモンドノット','エコロアルバ'],hole:'アドマイヤクワッズ',note:'朝日杯FSでの地力が際立った。皐月賞の大敗は2000mの距離不適。得意の1600mに戻れば巻き返し必至。'},
+  {media:'競馬の魅力',icon:'✨',pick:'ダイヤモンドノット',place:['カヴァレリッツォ','ロデオドライブ'],hole:'エコロアルバ',note:'ファルコンS快勝で視界良好。朝日杯2着のリベンジへ川田将雅騎手が渾身騎乗。'},
+  {media:'うましる',icon:'🐎',pick:'カヴァレリッツォ',place:['ダイヤモンドノット','エコロアルバ'],hole:'アスクイキゴミ',note:'7戦6回3着内の安定感。京王杯2歳S快勝など非凡な力あり。川田騎手との実績あるコンビが鍵。'},
+  {media:'競馬ラボ',icon:'🔬',pick:'ダイヤモンドノット',place:['カヴァレリッツォ','エコロアルバ'],hole:'レザベーション',note:'3歳No.1マイラーの座を懸けた一戦でファルコンS組の巻き返しに期待。'},
+  {media:'ウマニティ',icon:'🦄',pick:'ダイヤモンドノット',place:['カヴァレリッツォ','アドマイヤクワッズ'],hole:'バルセシート',note:'ファルコンSをレースレコードで完勝し戦法面でも進境。東京は京王杯2歳Sで快勝した舞台。'},
+  {media:"S-Johnny's",icon:'🌿',pick:'ダイヤモンドノット',place:['カヴァレリッツォ','ロデオドライブ'],hole:'アスクイキゴミ',note:'ファルコンS1着でG1勝負権あり。穴はロデオドライブ、初の左回りが吉と出れば逆転の目も。'},
+  {media:'キングスポーツ',icon:'👑',pick:'カヴァレリッツォ',place:['ダイヤモンドノット','エコロアルバ'],hole:'レザベーション',note:'昨年9番人気が3着するなど波乱含みのレース。カヴァレリッツォの末脚が展開にはまれば圧勝も。'},
+];
+
+const RACES = [
+  {id:1,name:'フェブラリーS',track:'東京',distance:'1600m',surface:'ダ',date:'2月22日',past:true,winner:'コスタノヴァ',jockey:'C.ルメール'},
+  {id:2,name:'高松宮記念',track:'中京',distance:'1200m',surface:'芝',date:'3月29日',past:true,winner:'サトノレーヴ',jockey:'C.ルメール'},
+  {id:3,name:'大阪杯',track:'阪神',distance:'2000m',surface:'芝',date:'4月5日',past:true,winner:'クロワデュノール',jockey:'北村友一'},
+  {id:4,name:'桜花賞',track:'阪神',distance:'1600m',surface:'芝',date:'4月12日',past:true,winner:'スターアニス',jockey:'松山弘平'},
+  {id:5,name:'皐月賞',track:'中山',distance:'2000m',surface:'芝',date:'4月19日',past:true,winner:'ロブチェン',jockey:'松山弘平'},
+  {id:6,name:'天皇賞（春）',track:'京都',distance:'3200m',surface:'芝',date:'5月3日',past:true,winner:'クロワデュノール',jockey:'北村友一'},
+  {id:7,name:'NHKマイルC',track:'東京',distance:'1600m',surface:'芝',date:'5月10日',past:false,horses:BASE_HORSES,media:BASE_MEDIA},
+  {id:8,name:'ヴィクトリアM',track:'東京',distance:'1600m',surface:'芝',date:'5月17日',past:false},
+  {id:9,name:'オークス',track:'東京',distance:'2400m',surface:'芝',date:'5月24日',past:false},
+  {id:10,name:'日本ダービー',track:'東京',distance:'2400m',surface:'芝',date:'5月31日',past:false},
+  {id:11,name:'安田記念',track:'東京',distance:'1600m',surface:'芝',date:'6月7日',past:false},
+  {id:12,name:'宝塚記念',track:'阪神',distance:'2200m',surface:'芝',date:'6月14日',past:false},
+  {id:13,name:'スプリンターズS',track:'中山',distance:'1200m',surface:'芝',date:'9月27日',past:false},
+  {id:14,name:'秋華賞',track:'京都',distance:'2000m',surface:'芝',date:'10月18日',past:false},
+  {id:15,name:'菊花賞',track:'京都',distance:'3000m',surface:'芝',date:'10月25日',past:false},
+  {id:16,name:'天皇賞（秋）',track:'東京',distance:'2000m',surface:'芝',date:'11月1日',past:false},
+  {id:17,name:'エリザベス女王杯',track:'京都',distance:'2200m',surface:'芝',date:'11月15日',past:false},
+  {id:18,name:'マイルCS',track:'京都',distance:'1600m',surface:'芝',date:'11月22日',past:false},
+  {id:19,name:'ジャパンカップ',track:'東京',distance:'2400m',surface:'芝',date:'11月29日',past:false},
+  {id:20,name:'チャンピオンズC',track:'中京',distance:'1800m',surface:'ダ',date:'12月6日',past:false},
+  {id:21,name:'有馬記念',track:'中山',distance:'2500m',surface:'芝',date:'12月27日',past:false},
+];
+
+const EXPERTS = [
+  {id:'blood',name:'血統博士・玄斎',emoji:'🧬',title:'血統分析',color:'#7C3AED',bg:'#F5F3FF',border:'#DDD6FE',
+    predict(h){
+      const s=x=>{let v=0;if(x.blood.includes('サートゥルナーリア'))v+=30;if(x.blood.includes('ブリックスアンドモルタル'))v+=28;if(x.blood.includes('モズアスコット'))v+=24;if(x.blood.includes('ロードカナロア'))v+=22;if(x.blood.includes('リアルスティール'))v+=18;if(x.blood.includes('エピファネイア'))v+=10;if(x.blood.includes('ダイワメジャー'))v+=12;v+=Math.max(0,8-(x.form.reduce((a,b)=>a+b,0)/x.form.length)*1.5);return v;};
+      const r=[...h].sort((a,b)=>s(b)-s(a));
+      const comments={'カヴァレリッツォ':'父サートゥルナーリアはマイル〜中距離の東京巧者。母系ハーツクライが末脚を増幅。血統的最上位評価。','ダイヤモンドノット':'父ブリックスアンドモルタルは米国型マイラー。母父ディープインパクト配合はマイル戦で黄金ニックス。','ロデオドライブ':'父サートゥルナーリア×母父スニッツェルの組み合わせは高速馬場で切れる。左回り適性も血統的に裏付けあり。','エコロアルバ':'父モズアスコットはクイーンアンS制覇のマイル巧者。東京の直線で末脚発揮できる血統構成。','アドマイヤクワッズ':'父リアルスティールはドバイターフ勝ち馬。母系Zoffanyの欧州スピード血統が東京1600mに合う。','アスクイキゴミ':'父ロードカナロアは日本最高峰のマイラー。産駒は短距離〜マイルに特化した鋭いスピードを持つ。'};
+      return{pick:r[0].name,place:[r[1].name,r[2].name],comment:comments[r[0].name]||`父${r[0].blood}はマイル戦に高い適性。東京芝1600mで本領発揮が期待できる。`};
+    }
+  },
+  {id:'pace',name:'展開師・流水',emoji:'🌊',title:'展開・ペース分析',color:'#0369A1',bg:'#F0F9FF',border:'#BAE6FD',
+    predict(h){
+      const nige=h.filter(x=>x.style==='逃げ').length,senkou=h.filter(x=>x.style==='先行').length,ps=nige*3+senkou*1.5;
+      const isH=ps>=7,isS=ps<=3;
+      const s=x=>{let v=Math.max(0,14-(x.form.reduce((a,b)=>a+b,0)/x.form.length)*2);if(isH){if(x.style==='差し')v+=28;if(x.style==='追込')v+=18;if(x.style==='先行')v+=5;if(x.style==='逃げ')v-=8;}else if(isS){if(x.style==='逃げ')v+=28;if(x.style==='先行')v+=22;if(x.style==='差し')v+=8;}else{if(x.style==='先行')v+=18;if(x.style==='差し')v+=16;if(x.style==='逃げ')v+=10;}if(x.waku<=3&&x.style==='先行')v+=8;if(x.waku<=3&&x.style==='逃げ')v+=10;if(x.waku>=6&&x.style==='差し')v+=8;return v;};
+      const r=[...h].sort((a,b)=>s(b)-s(a));
+      return{pick:r[0].name,place:[r[1].name,r[2].name],comment:`逃げ${nige}頭・先行${senkou}頭の構成から${isH?'ハイペース':isS?'スローペース':'ミドルペース'}を想定（ペース指数${ps.toFixed(1)}）。${r[0].style}脚質の${r[0].name}に展開が向く。`};
+    }
+  },
+  {id:'jockey',name:'騎手通・駆道',emoji:'🎠',title:'騎手・データ分析',color:'#065F46',bg:'#ECFDF5',border:'#A7F3D0',
+    predict(h){
+      const jR={'川田将雅':97,'C.ルメール':95,'D.レーン':91,'坂井瑠星':87,'横山武史':84,'松山弘平':86,'戸崎圭太':85,'北村友一':82,'西村淳也':80,'横山和生':79,'岩田望来':76,'原優介':73,'津村明秀':74,'松若風馬':72,'斎藤新':71,'三浦皇成':73,'佐々木大輔':69,'西塚洸二':66};
+      const r=[...h].sort((a,b)=>(jR[b.jockey]||70)+Math.max(0,10-(b.form.reduce((a,b)=>a+b,0)/b.form.length))*1.5-((jR[a.jockey]||70)+Math.max(0,10-(a.form.reduce((a,b)=>a+b,0)/a.form.length))*1.5));
+      const c={'川田将雅':`東京芝1600mで複勝率42%超のコース巧者。仕掛けのタイミングが正確で${r[0].name}との信頼度最高。`,'C.ルメール':`東京コース勝率トップクラス。直線での追い出しが絶妙で${r[0].name}の能力を最大限に引き出す。`,'D.レーン':`大舞台での騎乗経験豊富。東京の広いコースで豪快なコース取りを見せる。${r[0].name}を押し上げる。`,'坂井瑠星':`若手トップの成長株。東京では積極的な仕掛けで結果を出している。${r[0].name}との新コンビに期待。`};
+      return{pick:r[0].name,place:[r[1].name,r[2].name],comment:c[r[0].jockey]||`${r[0].jockey}騎手の東京芝成績スコアは${jR[r[0].jockey]||70}pt（上位）。${r[0].name}との相性も加味すると信頼度は高い。`};
+    }
+  },
+  {id:'data',name:'データ鬼・算盤',emoji:'📊',title:'統計・傾向分析',color:'#1E40AF',bg:'#EFF6FF',border:'#BFDBFE',
+    predict(h){
+      const s=x=>{let v=0;if([4,5,6].includes(x.waku))v+=22;else if([3,7].includes(x.waku))v+=14;else if(x.waku===8)v+=10;else v+=4;if(x.form[0]===1)v+=28;else if(x.form[0]===2)v+=20;else if(x.form[0]===3)v+=14;else if(x.form[0]<=5)v+=6;else v-=5;v+=x.form.filter(f=>f<=2).length*7;const avg=x.form.reduce((a,b)=>a+b,0)/x.form.length;v+=Math.max(0,10-x.form.reduce((a,b)=>a+(b-avg)**2,0)/x.form.length);const p=[...h].sort((a,b)=>a.odds-b.odds).findIndex(y=>y.id===x.id)+1;if(p<=3)v+=15;if(p===1)v+=8;return v;};
+      const r=[...h].sort((a,b)=>s(b)-s(a));
+      const renntai=r[0].form.filter(f=>f<=2).length;
+      const pop=[...h].sort((a,b)=>a.odds-b.odds).findIndex(x=>x.id===r[0].id)+1;
+      return{pick:r[0].name,place:[r[1].name,r[2].name],comment:`${r[0].name}は過去10年の好走条件を高充足：${r[0].waku}枠（有利帯）・前走${r[0].form[0]}着・直近5走連対${renntai}回・人気${pop}番手。統計モデルスコア1位。`};
+    }
+  },
+];
+
+// ─── 状態 ─────────────────────────────────────────────────────
+let selectedRace = RACES.find(r=>!r.past) || RACES[6];
+let currentHorses = [...(selectedRace.horses||[])];
+let currentMedia  = [...(selectedRace.media||[])];
+let updatedAt = '2026年5月8日 22:30';
+let currentTab = 'experts';
+let revealedExperts = {};
+let expandedMedia = null;
+let apiKey = '';
+try { apiKey = localStorage.getItem('pplx_api_key')||''; } catch{}
+
+// ─── ユーティリティ ───────────────────────────────────────────
+function wakuBadge(waku){
+  return `<span class="waku" style="background:${WAKU_COLOR[waku]};color:${WAKU_TEXT[waku]};${waku===1?'border:1px solid #D1D5DB':''}">${waku}枠</span>`;
+}
+function nowStr(){
+  const d=new Date();
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function showError(msg){
+  document.getElementById('error-msg').textContent=msg;
+  document.getElementById('error-bar').style.display='flex';
+}
+
+// ─── レンダリング ─────────────────────────────────────────────
+function renderRaceTabs(){
+  const el=document.getElementById('race-tabs');
+  el.innerHTML=RACES.map(r=>`
+    <button class="race-tab ${r.past?'past':''} ${r.id===selectedRace.id?'active':''}"
+      onclick="selectRace(${r.id})">
+      <div class="race-tab-name">${r.past?'✓ ':''}${r.name}</div>
+      <div class="race-tab-date">${r.date}</div>
+      ${r.past&&r.winner?`<div class="race-tab-winner">${r.winner}</div>`:''}
+    </button>`).join('');
+}
+
+function renderRaceInfo(){
+  document.getElementById('race-name').textContent=selectedRace.name;
+  document.getElementById('race-detail').textContent=`${selectedRace.track} ${selectedRace.distance} ${selectedRace.surface}`;
+  document.getElementById('race-date').textContent=`2026年${selectedRace.date}`;
+  const wb=document.getElementById('winner-bar');
+  if(selectedRace.winner){
+    wb.style.display='flex';
+    wb.innerHTML=`<span>🥇</span><span style="font-size:13px;font-weight:700;color:#0F172A">${selectedRace.winner}</span><span style="font-size:12px;color:#6B7280">（${selectedRace.jockey}）</span>`;
+  } else { wb.style.display='none'; }
+  const op=document.getElementById('odds-preview');
+  if(currentHorses.length){
+    const top=[...currentHorses].sort((a,b)=>a.odds-b.odds).slice(0,5);
+    op.innerHTML=top.map(h=>`
+      <span class="odds-chip">
+        ${wakuBadge(h.waku)}
+        <span style="font-weight:600;color:#334155">${h.name}</span>
+        <span class="odds-val ${h.odds<5?'odds-hot':h.odds<10?'odds-warm':'odds-cold'}">${h.odds}倍</span>
+      </span>`).join('')+`<span style="font-size:11px;color:#94A3B8;align-self:center">他${currentHorses.length-5}頭</span>`;
+  } else { op.innerHTML=''; }
+}
+
+function renderExperts(){
+  const el=document.getElementById('content-experts');
+  if(!currentHorses.length){el.innerHTML=emptyHTML();return;}
+
+  const results={};
+  EXPERTS.forEach(e=>{results[e.id]=e.predict(currentHorses);});
+  const pickCount={};
+  EXPERTS.forEach(e=>{const p=results[e.id].pick;pickCount[p]=(pickCount[p]||0)+1;});
+  const pickRanked=Object.entries(pickCount).sort((a,b)=>b[1]-a[1]);
+
+  const marks=['◎','○','▲'];
+  const summaryHTML=pickRanked.map(([name,cnt],i)=>{
+    const h=currentHorses.find(x=>x.name===name);
+    const pct=Math.round((cnt/EXPERTS.length)*100);
+    return `<div style="margin-bottom:10px">
+      <div class="summary-bar">
+        <span class="summary-mark">${marks[i]||'　'}</span>
+        ${h?wakuBadge(h.waku):''}
+        <span class="summary-name">${name}</span>
+        <span class="summary-count" style="color:${i===0?'#1D4ED8':'#64748B'};font-weight:${i===0?700:400}">${cnt}/${EXPERTS.length}票</span>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${i===0?'#2563EB':i===1?'#93C5FD':'#CBD5E1'}"></div></div>
+    </div>`;
+  }).join('');
+
+  const expertCards=EXPERTS.map(e=>{
+    const r=results[e.id];
+    const isOpen=revealedExperts[e.id];
+    const ph=currentHorses.find(h=>h.name===r.pick);
+    return `<div class="expert-card" style="border-left:4px solid ${e.color};border:1px solid ${e.border}">
+      <div class="expert-header">
+        <span class="expert-emoji">${e.emoji}</span>
+        <div style="flex:1;min-width:0">
+          <div class="expert-name" style="color:${e.color}">${e.name}</div>
+          <div class="expert-title">${e.title}</div>
+        </div>
+        ${isOpen?`
+          <div style="text-align:right">
+            <div style="font-size:10px;color:#94A3B8;margin-bottom:2px">◎ 本命</div>
+            <div style="font-size:14px;font-weight:700;color:${e.color}">${r.pick}</div>
+          </div>
+          <button class="close-btn" onclick="toggleExpert('${e.id}')">›</button>
+        `:`<button class="reveal-btn" style="background:${e.color}" onclick="toggleExpert('${e.id}')">予想を見る</button>`}
+      </div>
+      ${isOpen?`
+        <div class="expert-body">
+          <div class="pick-row">
+            <div class="pick-box" style="background:${e.bg};border:1px solid ${e.border};flex:1">
+              <div class="pick-label" style="color:${e.color}">◎ 本命</div>
+              <div class="pick-horse">${ph?wakuBadge(ph.waku):''}${r.pick}</div>
+            </div>
+            <div class="place-box">
+              <div class="place-label">○ 対抗</div>
+              <div class="place-names">${r.place.join(' / ')}</div>
+            </div>
+          </div>
+          <div class="comment-box" style="background:${e.bg};border:1px solid ${e.border}">${r.comment}</div>
+        </div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="card" style="padding:14px 18px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#64748B;margin-bottom:12px">🗳️ ${EXPERTS.length}人の予想屋・本命集計</div>
+      ${summaryHTML}
+    </div>
+    ${expertCards}`;
+}
+
+function renderMedia(){
+  const el=document.getElementById('content-media');
+  if(!currentHorses.length){el.innerHTML=emptyHTML();return;}
+
+  const picks=currentMedia;
+  const pickTally={},holeTally={};
+  picks.forEach(p=>{pickTally[p.pick]=(pickTally[p.pick]||0)+1;if(p.hole)holeTally[p.hole]=(holeTally[p.hole]||0)+1;});
+  const pickRanked=Object.entries(pickTally).sort((a,b)=>b[1]-a[1]);
+  const holeRanked=Object.entries(holeTally).sort((a,b)=>b[1]-a[1]);
+  const marks=['◎','○','▲'];
+
+  const summaryHTML=pickRanked.map(([name,cnt],i)=>{
+    const h=currentHorses.find(x=>x.name===name);
+    const pct=Math.round((cnt/picks.length)*100);
+    return `<div style="margin-bottom:10px">
+      <div class="summary-bar">
+        <span class="summary-mark">${marks[i]||'　'}</span>
+        ${h?wakuBadge(h.waku):''}
+        <span class="summary-name">${name}</span>
+        <span class="summary-count" style="color:${i===0?'#1D4ED8':'#64748B'};font-weight:${i===0?700:400}">${cnt}/${picks.length}媒体</span>
+      </div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%;background:${i===0?'#2563EB':i===1?'#93C5FD':'#CBD5E1'}"></div></div>
+    </div>`;
+  }).join('');
+
+  const holeHTML=holeRanked.length?`
+    <div class="card" style="padding:12px 16px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:#64748B;margin-bottom:8px">💥 穴馬注目度</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${holeRanked.map(([name,cnt],i)=>{
+          const h=currentHorses.find(x=>x.name===name);
+          return `<div class="hole-chip ${i===0?'hole-chip-top':'hole-chip-other'}">
+            ${h?wakuBadge(h.waku):''}
+            <span style="font-size:12px;font-weight:700;color:${i===0?'#C2410C':'#374151'}">${name}</span>
+            <span style="font-size:11px;color:#94A3B8">${cnt}票</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`:'';
+
+  const mediaCards=picks.map((p,i)=>{
+    const ph=currentHorses.find(h=>h.name===p.pick);
+    const isOpen=expandedMedia===i;
+    return `<div class="media-card">
+      <div class="media-header" onclick="toggleMedia(${i})">
+        <span class="media-icon">${p.icon||'📰'}</span>
+        <span class="media-name">${p.media}</span>
+        <div class="media-pick-inline">
+          ${ph?wakuBadge(ph.waku):''}
+          <span class="media-pick-name">◎ ${p.pick}</span>
+        </div>
+        <span class="media-chevron" style="transform:${isOpen?'rotate(90deg)':'rotate(0deg)'}">›</span>
+      </div>
+      ${isOpen?`
+        <div class="media-body">
+          <div class="pick-row">
+            <div class="pick-box" style="background:#FFFBEB;border:1px solid #FDE68A;flex:1">
+              <div class="pick-label" style="color:#92400E">◎ 本命</div>
+              <div class="pick-horse">${ph?wakuBadge(ph.waku):''}${p.pick}</div>
+            </div>
+            <div class="place-box" style="background:#EFF6FF;border:1px solid #BFDBFE">
+              <div class="place-label" style="color:#1E40AF">○ 対抗</div>
+              <div class="place-names" style="color:#1E3A8A">${(p.place||[]).join(' / ')}</div>
+            </div>
+            ${p.hole?`<div class="hole-box"><div class="hole-label">💥 穴</div><div class="hole-name">${p.hole}</div></div>`:''}
+          </div>
+          <div class="note-box">${p.note}</div>
+        </div>`:''}
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div id="update-banner">
+      <div id="update-info">
+        <div id="update-time">最終更新: ${updatedAt}</div>
+      </div>
+      <button id="update-btn" onclick="handleRefresh()">🔄 今すぐ更新</button>
+    </div>
+    <div class="card" style="padding:14px 18px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:#64748B;margin-bottom:12px">📊 ${picks.length}媒体の本命集計</div>
+      ${summaryHTML}
+    </div>
+    ${holeHTML}
+    ${mediaCards}`;
+}
+
+function emptyHTML(){
+  return `<div class="empty"><div class="empty-icon">🏇</div><div class="empty-text">出馬表発表後に予想・分析が使えます</div></div>`;
+}
+
+function render(){
+  renderRaceTabs();
+  renderRaceInfo();
+  if(currentTab==='experts') renderExperts();
+  else renderMedia();
+}
+
+// ─── イベント ─────────────────────────────────────────────────
+function selectRace(id){
+  selectedRace=RACES.find(r=>r.id===id);
+  currentHorses=[...(selectedRace.horses||[])];
+  currentMedia=[...(selectedRace.media||[])];
+  revealedExperts={};
+  expandedMedia=null;
+  currentTab='experts';
+  document.getElementById('tab-experts').classList.add('active');
+  document.getElementById('tab-media').classList.remove('active');
+  document.getElementById('content-experts').style.display='';
+  document.getElementById('content-media').style.display='none';
+  render();
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.getElementById('tab-experts').classList.toggle('active',tab==='experts');
+  document.getElementById('tab-media').classList.toggle('active',tab==='media');
+  document.getElementById('content-experts').style.display=tab==='experts'?'':'none';
+  document.getElementById('content-media').style.display=tab==='media'?'':'none';
+  render();
+}
+
+function toggleExpert(id){
+  revealedExperts[id]=!revealedExperts[id];
+  renderExperts();
+}
+
+function toggleMedia(i){
+  expandedMedia=expandedMedia===i?null:i;
+  renderMedia();
+}
+
+// ─── API更新 ──────────────────────────────────────────────────
+function handleRefresh(){
+  if(apiKey){ doUpdate(apiKey); }
+  else { openModal(); }
+}
+
+function openModal(){
+  const saved=apiKey;
+  document.getElementById('api-input').value=saved;
+  document.getElementById('api-saved').style.display=saved?'block':'none';
+  document.getElementById('api-modal-bg').style.display='flex';
+}
+
+function closeModal(){
+  document.getElementById('api-modal-bg').style.display='none';
+}
+
+function submitApiKey(){
+  const key=document.getElementById('api-input').value.trim();
+  if(!key) return;
+  closeModal();
+  doUpdate(key);
+}
+
+async function doUpdate(key){
+  apiKey=key;
+  try{ localStorage.setItem('pplx_api_key',key); }catch{}
+  document.getElementById('updating-indicator').style.display='flex';
+  document.getElementById('error-bar').style.display='none';
+
+  const d=new Date();
+  const dateStr=`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  const prompt=`${dateStr}時点の「${selectedRace.name}2026」について以下をJSONのみで返してください。\n{"odds":[{"name":"馬名","odds":数値}],"media":[{"media":"媒体名","icon":"絵文字","pick":"本命馬名","place":["対抗1","対抗2"],"hole":"穴馬名","note":"予想理由80字以内"}]}\noddsは全出走馬の最新単勝オッズ。mediaは主要競馬メディアの予想を10件以上。`;
+
+  try{
+    const res=await fetch('https://api.perplexity.ai/chat/completions',{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'sonar-pro',
+        messages:[
+          {role:'system',content:'競馬情報の収集専門家です。JSONのみ返してください。'},
+          {role:'user',content:prompt}
+        ],
+        temperature:0.1
+      })
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
+    const data=await res.json();
+    const raw=data.choices?.[0]?.message?.content||'';
+    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if(parsed.odds?.length){
+      currentHorses=currentHorses.map(h=>{const f=parsed.odds.find(o=>o.name===h.name);return f?{...h,odds:f.odds}:h;});
+    }
+    if(parsed.media?.length){ currentMedia=parsed.media; }
+    updatedAt=nowStr();
+  }catch(e){
+    showError(`更新失敗: ${e.message}`);
+  }
+  document.getElementById('updating-indicator').style.display='none';
+  render();
+}
+
+// ─── 初期化 ───────────────────────────────────────────────────
+render();
+</script>
+
+</body>
+</html>
